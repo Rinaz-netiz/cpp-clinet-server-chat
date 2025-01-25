@@ -3,8 +3,10 @@ project(cpp_clinet_server_chat)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(cpp_clinet_server_chat
-    client.cpp
-    server.cpp)
+# Клиентская часть
+add_executable(client client.cpp)
+target_link_libraries(client ws2_32)  # Подключение библиотеки Winsock для клиента
 
-target_link_libraries(cpp_clinet_server_chat ws2_32)
+# Серверная часть
+add_executable(server server.cpp)
+target_link_libraries(server ws2_32)  # Подключение библиотеки Winsock для сервера
