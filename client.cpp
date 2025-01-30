@@ -3,6 +3,7 @@
 #include <ostream>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <thread>
 
 
 
@@ -14,6 +15,35 @@
 
 #define DEFAULT_PORT "27015"
 #define DEFAULT_BUFLEN 512
+
+
+void send_message(SOCKET sock) {
+    int sent_bytes=1;
+    while (sent_bytes > 0) {
+        std::string message;
+        getline(std::cin, message);
+        sent_bytes = send(sock, message.c_str(), (int)message.length(), 0);
+        if (sent_bytes == SOCKET_ERROR) {
+            std::cout << "Error sending message\n";
+            break;
+        }
+    }
+}
+
+void receive_message(SOCKET sock) {
+    int received_bytes=1;
+    char recvbuf[DEFAULT_BUFLEN];
+    int recvbuflen = DEFAULT_BUFLEN;
+    while (received_bytes > 0) {
+        memset(recvbuf, 0, recvbuflen);
+        received_bytes = recv(sock, recvbuf, recvbuflen, 0);
+        if (received_bytes == SOCKET_ERROR) {
+            std::cout << "Error receiving message\n";
+            break;
+        }
+        std::cout << recvbuf << std::endl;
+    }
+}
 
 int __cdecl main()
 {
@@ -75,36 +105,42 @@ int __cdecl main()
     }
 
     // Send a message
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
+    std::thread t_r(receive_message, ConnectSocket);
+    std::thread t_s(send_message, ConnectSocket);
 
-    while(true) {
-        std::string sendData;
-        memset(recvbuf, 0, DEFAULT_BUFLEN);
+    t_r.join();
+    t_s.join();
 
-        getline(std::cin, sendData);
-        iResult = send( ConnectSocket, sendData.c_str(), (int)sendData.size(), 0 );
-        if (iResult == SOCKET_ERROR) {
-            std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
-            break;
-        }
+    // char recvbuf[DEFAULT_BUFLEN];
+    // int recvbuflen = DEFAULT_BUFLEN;
 
-        std::cout << "Bytes Sent" << iResult << std::endl;
-
-        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-        if ( iResult > 0 ) {
-            std::cout << "Bytes received: " << iResult << std::endl;
-            std::cout << recvbuf << std::endl;
-        }
-        else if ( iResult == 0 ) {
-            std::cout << "Connection closed" << std::endl;
-            break;
-        }
-        else {
-            std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
-            break;
-        }
-    }
+    // while(true) {
+    //     std::string sendData;
+    //     memset(recvbuf, 0, DEFAULT_BUFLEN);
+    //
+    //     getline(std::cin, sendData);
+    //     iResult = send( ConnectSocket, sendData.c_str(), (int)sendData.size(), 0 );
+    //     if (iResult == SOCKET_ERROR) {
+    //         std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
+    //         break;
+    //     }
+    //
+    //     std::cout << "Bytes Sent" << iResult << std::endl;
+    //
+    //     iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+    //     if ( iResult > 0 ) {
+    //         std::cout << "Bytes received: " << iResult << std::endl;
+    //         std::cout << recvbuf << std::endl;
+    //     }
+    //     else if ( iResult == 0 ) {
+    //         std::cout << "Connection closed" << std::endl;
+    //         break;
+    //     }
+    //     else {
+    //         std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
+    //         break;
+    //     }
+    // }
 
 
     // shutdown the connection since no more data will be sent
