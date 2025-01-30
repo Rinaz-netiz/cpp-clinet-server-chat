@@ -14,8 +14,9 @@
 
 void message(SOCKET sock_r, SOCKET sock_s) {
     int iResult=1;
+    char recvbuf[DEFAULT_BUFLEN];
     while (iResult > 0) {
-        char recvbuf[DEFAULT_BUFLEN];
+        memset(recvbuf, 0, DEFAULT_BUFLEN);
         iResult = recv(sock_r, recvbuf, DEFAULT_BUFLEN, 0);
         if (iResult == SOCKET_ERROR) {
             std::cout << "recv failed. Error: " << WSAGetLastError() << std::endl;
@@ -145,6 +146,7 @@ int __cdecl main()
     closesocket(ClientSocket_1);
     closesocket(ClientSocket_2);
     WSACleanup();
+
 
     return 0;
 }

@@ -104,7 +104,9 @@ int __cdecl main()
         return 1;
     }
 
+
     // Send a message
+    std::cout << "Let's go!" << std::endl;
     std::thread t_r(receive_message, ConnectSocket);
     std::thread t_s(send_message, ConnectSocket);
 
@@ -119,6 +121,7 @@ int __cdecl main()
         WSACleanup();
         return 1;
     }
+    std::cout << "disconect :/" << std::endl;
 
     // cleanup
     closesocket(ConnectSocket);
