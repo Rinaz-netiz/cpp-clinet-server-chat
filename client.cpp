@@ -1,71 +1,124 @@
 #include <iostream>
+#include <string>
+#include <ostream>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#pragma comment(lib, "ws2_32.lib") // Подключение библиотеки Winsock
 
-#define PORT 8080
-#define BUFFER_SIZE 1024
 
-int main() {
+// Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
+#pragma comment (lib, "Ws2_32.lib")
+#pragma comment (lib, "Mswsock.lib")
+#pragma comment (lib, "AdvApi32.lib")
+
+
+#define DEFAULT_PORT "27015"
+#define DEFAULT_BUFLEN 512
+
+int __cdecl main()
+{
     WSADATA wsaData;
-    SOCKET sock = 0;
-    struct sockaddr_in serv_addr;
+    auto ConnectSocket = INVALID_SOCKET;
+    addrinfo *result = nullptr,
+                    *ptr = nullptr,
+                    hints{};
 
-    // Инициализация Winsock
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "WSAStartup failed." << std::endl;
+    int iResult;
+
+    // Initialize Winsock
+    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (iResult != 0) {
+        std::cout << "WSAStartup failed with error: " << iResult << std::endl;
         return 1;
     }
 
-    // Создание сокета
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
-        std::cerr << "Socket creation failed." << std::endl;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    // Resolve the server address and port
+    iResult = getaddrinfo(nullptr, DEFAULT_PORT, &hints, &result);
+    if ( iResult != 0 ) {
+        std::cout << "getaddrinfo failed with error: " << iResult << std::endl;
         WSACleanup();
         return 1;
     }
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
+    // Attempt to connect to an address until one succeeds
+    for(ptr=result; ptr != nullptr ;ptr=ptr->ai_next) {
 
-    // Преобразование IP-адреса из текстового в бинарный формат
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        std::cerr << "Invalid address/ Address not supported." << std::endl;
-        closesocket(sock);
+        // Create a SOCKET for connecting to server
+        ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
+            ptr->ai_protocol);
+        if (ConnectSocket == INVALID_SOCKET) {
+            std::cout << "socket failed with error: " << WSAGetLastError() << std::endl;
+            WSACleanup();
+            return 1;
+        }
+
+        // Connect to server.
+        iResult = connect( ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+        if (iResult == SOCKET_ERROR) {
+            closesocket(ConnectSocket);
+            ConnectSocket = INVALID_SOCKET;
+            continue;
+        }
+        break;
+    }
+
+    freeaddrinfo(result);
+
+    if (ConnectSocket == INVALID_SOCKET) {
+        std::cout << "unable to connect to server" << std::endl;
         WSACleanup();
         return 1;
     }
 
-    // Подключение к серверу
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == SOCKET_ERROR) {
-        std::cerr << "Connection failed." << std::endl;
-        closesocket(sock);
-        WSACleanup();
-        return 1;
-    }
+    // Send a message
+    char recvbuf[DEFAULT_BUFLEN];
+    int recvbuflen = DEFAULT_BUFLEN;
 
-    std::cout << "Connected to the server!" << std::endl;
+    while(true) {
+        std::string sendData;
+        memset(recvbuf, 0, DEFAULT_BUFLEN);
 
-    // Обмен сообщениями
-    while (true) {
-        // Отправка сообщения
-        std::string message;
-        std::cout << "You: ";
-        std::getline(std::cin, message);
-        send(sock, message.c_str(), message.length(), 0);
-
-        // Получение сообщения
-        char buffer[BUFFER_SIZE] = {0};
-        int valread = recv(sock, buffer, BUFFER_SIZE, 0);
-        if (valread <= 0) {
-            std::cout << "Server disconnected." << std::endl;
+        getline(std::cin, sendData);
+        iResult = send( ConnectSocket, sendData.c_str(), (int)sendData.size(), 0 );
+        if (iResult == SOCKET_ERROR) {
+            std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
             break;
         }
-        std::cout << "Other client: " << buffer << std::endl;
+
+        std::cout << "Bytes Sent" << iResult << std::endl;
+
+        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+        if ( iResult > 0 ) {
+            std::cout << "Bytes received: " << iResult << std::endl;
+            std::cout << recvbuf << std::endl;
+        }
+        else if ( iResult == 0 ) {
+            std::cout << "Connection closed" << std::endl;
+            break;
+        }
+        else {
+            std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
+            break;
+        }
     }
 
-    // Закрытие сокета
-    closesocket(sock);
+
+    // shutdown the connection since no more data will be sent
+    iResult = shutdown(ConnectSocket, SD_SEND);
+    if (iResult == SOCKET_ERROR) {
+        std::cout << "shutdown failed with error: " << WSAGetLastError() << std::endl;
+        closesocket(ConnectSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    // cleanup
+    closesocket(ConnectSocket);
     WSACleanup();
+
     return 0;
 }
