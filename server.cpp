@@ -124,44 +124,6 @@ int __cdecl main()
     t1.join();
     t2.join();
 
-    // do {
-    //     memset(recvbuf, 0, DEFAULT_BUFLEN);
-    //     iResult = recv(ClientSocket_1, recvbuf, recvbuflen, 0);
-    //
-    //     if(iResult<=0)  {
-    //         std::cout << "recv() failed with error: " << WSAGetLastError() << "\n";
-    //         break;
-    //     }
-    //
-    //     std::cout << recvbuf << "\n";
-    //
-    //     // Echo the buffer back to the sender
-    //     iSendResult = send( ClientSocket_2, recvbuf, iResult, 0 );
-    //     if (iSendResult == SOCKET_ERROR) {
-    //         std::cout << "send() failed with error: " << WSAGetLastError() << "\n";
-    //         break;
-    //     }
-    //     std::cout << "Bytes sent: " << iSendResult << "\n";
-    //
-    //
-    //     memset(recvbuf, 0, DEFAULT_BUFLEN);
-    //     iResult = recv(ClientSocket_2, recvbuf, recvbuflen, 0);
-    //
-    //     if(iResult<=0)  {
-    //         std::cout << "recv() failed with error: " << WSAGetLastError() << "\n";
-    //         break;
-    //     }
-    //
-    //     std::cout << recvbuf << "\n";
-    //
-    //     // Echo the buffer back to the sender
-    //     iSendResult = send( ClientSocket_1, recvbuf, iResult, 0 );
-    //     if (iSendResult == SOCKET_ERROR) {
-    //         std::cout << "send() failed with error: " << WSAGetLastError() << "\n";
-    //         break;
-    //     }
-    //     std::cout << "Bytes sent: " << iSendResult << "\n";
-    // } while (true);
 
     // shutdown the connection since we're done
     iResult = shutdown(ClientSocket_1, SD_SEND);

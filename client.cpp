@@ -111,38 +111,6 @@ int __cdecl main()
     t_r.join();
     t_s.join();
 
-    // char recvbuf[DEFAULT_BUFLEN];
-    // int recvbuflen = DEFAULT_BUFLEN;
-
-    // while(true) {
-    //     std::string sendData;
-    //     memset(recvbuf, 0, DEFAULT_BUFLEN);
-    //
-    //     getline(std::cin, sendData);
-    //     iResult = send( ConnectSocket, sendData.c_str(), (int)sendData.size(), 0 );
-    //     if (iResult == SOCKET_ERROR) {
-    //         std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
-    //         break;
-    //     }
-    //
-    //     std::cout << "Bytes Sent" << iResult << std::endl;
-    //
-    //     iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-    //     if ( iResult > 0 ) {
-    //         std::cout << "Bytes received: " << iResult << std::endl;
-    //         std::cout << recvbuf << std::endl;
-    //     }
-    //     else if ( iResult == 0 ) {
-    //         std::cout << "Connection closed" << std::endl;
-    //         break;
-    //     }
-    //     else {
-    //         std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
-    //         break;
-    //     }
-    // }
-
-
     // shutdown the connection since no more data will be sent
     iResult = shutdown(ConnectSocket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
