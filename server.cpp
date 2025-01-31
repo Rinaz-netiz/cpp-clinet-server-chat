@@ -1,105 +1,152 @@
-/*
-Написать клиент-серверное приложение
-Реализовать что-то типо мессенджера, сообщение должно шифровать на стороне клиента
-Клиент должен работать через терминал, шифрование должно быть симметричным
-*/
+#undef UNICODE
+
 #include <iostream>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <thread>
 
-#pragma comment(lib, "ws2_32.lib") // Подключение библиотеки Winsock
+// Need to link with Ws2_32.lib
+#pragma comment (lib, "Ws2_32.lib")
+// #pragma comment (lib, "Mswsock.lib")
 
-#define PORT 8080
-#define BUFFER_SIZE 1024
+#define DEFAULT_BUFLEN 512
+#define DEFAULT_PORT "27015"
 
-int main() {
+void message(SOCKET sock_r, SOCKET sock_s) {
+    int iResult=1;
+    char recvbuf[DEFAULT_BUFLEN];
+    while (iResult > 0) {
+        memset(recvbuf, 0, DEFAULT_BUFLEN);
+        iResult = recv(sock_r, recvbuf, DEFAULT_BUFLEN, 0);
+        if (iResult == SOCKET_ERROR) {
+            std::cout << "recv failed. Error: " << WSAGetLastError() << std::endl;
+            break;
+        }
+
+        iResult = send(sock_s, recvbuf, DEFAULT_BUFLEN, 0);
+        if (iResult == SOCKET_ERROR) {
+            std::cout << "send failed. Error: " << WSAGetLastError() << std::endl;
+            break;
+        }
+    }
+}
+
+int __cdecl main()
+{
     WSADATA wsaData;
-    SOCKET server_fd, client1_fd, client2_fd;
-    struct sockaddr_in address;
-    int addrlen = sizeof(address);
-    char buffer[BUFFER_SIZE] = {0};
+    int iResult;
 
-    // Инициализация Winsock
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "WSAStartup failed." << std::endl;
+    auto ListenSocket = INVALID_SOCKET;
+    auto ClientSocket_1 = INVALID_SOCKET, ClientSocket_2 = INVALID_SOCKET;
+
+    addrinfo *result = nullptr;
+    addrinfo hints{};
+
+    int iSendResult;
+    char recvbuf[DEFAULT_BUFLEN];
+    int recvbuflen = DEFAULT_BUFLEN;
+
+    // Initialize Winsock
+    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (iResult != 0) {
+        printf("WSAStartup failed with error: %d\n", iResult);
         return 1;
     }
 
-    // Создание сокета
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
-        std::cerr << "Socket creation failed." << std::endl;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
+    // Resolve the server address and port
+    iResult = getaddrinfo(nullptr, DEFAULT_PORT, &hints, &result);
+    if ( iResult != 0 ) {
+        std::cout << "getaddrinfo failed with error: " << iResult << "\n";
         WSACleanup();
         return 1;
     }
 
-    // Настройка адреса сервера
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
-
-    // Привязка сокета к адресу
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) == SOCKET_ERROR) {
-        std::cerr << "Bind failed." << std::endl;
-        closesocket(server_fd);
+    // Create a SOCKET for the server to listen for client connections.
+    ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (ListenSocket == INVALID_SOCKET) {
+        std::cout << "socket() failed with error: " << WSAGetLastError() << "\n";
+        freeaddrinfo(result);
         WSACleanup();
         return 1;
     }
 
-    // Ожидание подключения клиентов
-    if (listen(server_fd, 2) == SOCKET_ERROR) {
-        std::cerr << "Listen failed." << std::endl;
-        closesocket(server_fd);
+    // Setup the TCP listening socket
+    iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    if (iResult == SOCKET_ERROR) {
+        std::cout << "bind() failed with error: " << WSAGetLastError() << "\n";
+        freeaddrinfo(result);
+        closesocket(ListenSocket);
         WSACleanup();
         return 1;
     }
 
-    std::cout << "Waiting for clients to connect..." << std::endl;
+    freeaddrinfo(result);
 
-    // Принятие подключения от первого клиента
-    if ((client1_fd = accept(server_fd, (struct sockaddr *)&address, &addrlen)) == INVALID_SOCKET) {
-        std::cerr << "Accept failed." << std::endl;
-        closesocket(server_fd);
+    iResult = listen(ListenSocket, SOMAXCONN);
+    if (iResult == SOCKET_ERROR) {
+        std::cout << "listen() failed with error: " << WSAGetLastError() << "\n";
+        closesocket(ListenSocket);
         WSACleanup();
         return 1;
     }
-    std::cout << "Client 1 connected!" << std::endl;
+    std::cout << "Waiting for a connection...\n";
 
-    // Принятие подключения от второго клиента
-    if ((client2_fd = accept(server_fd, (struct sockaddr *)&address, &addrlen)) == INVALID_SOCKET) {
-        std::cerr << "Accept failed." << std::endl;
-        closesocket(server_fd);
+    // Accept a client socket
+    ClientSocket_1 = accept(ListenSocket, nullptr, nullptr);
+    if (ClientSocket_1 == INVALID_SOCKET) {
+        std::cout << "accept() failed with error: " << WSAGetLastError() << "\n";
+        closesocket(ListenSocket);
         WSACleanup();
         return 1;
     }
-    std::cout << "Client 2 connected!" << std::endl;
+    std::cout << "Connection 1 established.\n";
 
-    // Обмен сообщениями между клиентами
-    while (true) {
-        // Получение сообщения от клиента 1 и отправка клиенту 2
-        memset(buffer, 0, BUFFER_SIZE);
-        int valread = recv(client1_fd, buffer, BUFFER_SIZE, 0);
-        if (valread <= 0) {
-            std::cout << "Client 1 disconnected." << std::endl;
-            break;
-        }
-        std::cout << "Client 1: " << buffer << std::endl;
-        send(client2_fd, buffer, valread, 0);
+    ClientSocket_2 = accept(ListenSocket, nullptr, nullptr);
+    if (ClientSocket_2 == INVALID_SOCKET) {
+        std::cout << "accept() failed with error: " << WSAGetLastError() << "\n";
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+    std::cout << "Connection 2 established.\n";
 
-        // Получение сообщения от клиента 2 и отправка клиенту 1
-        memset(buffer, 0, BUFFER_SIZE);
-        valread = recv(client2_fd, buffer, BUFFER_SIZE, 0);
-        if (valread <= 0) {
-            std::cout << "Client 2 disconnected." << std::endl;
-            break;
-        }
-        std::cout << "Client 2: " << buffer << std::endl;
-        send(client1_fd, buffer, valread, 0);
+    // No longer need server socket
+    closesocket(ListenSocket);
+
+    // Receive until the peer shuts down the connection
+    std::cout << "Ready for chat\n";
+    std::thread t1(message, ClientSocket_1, ClientSocket_2);
+    std::thread t2(message, ClientSocket_2, ClientSocket_1);
+    t1.join();
+    t2.join();
+
+
+    // shutdown the connection since we're done
+    iResult = shutdown(ClientSocket_1, SD_SEND);
+    if (iResult == SOCKET_ERROR) {
+        std::cout << "shutdown() failed with error: " << WSAGetLastError() << "\n";
+        closesocket(ClientSocket_1);
+        WSACleanup();
+        return 1;
+    }
+    iResult = shutdown(ClientSocket_2, SD_SEND);
+    if (iResult == SOCKET_ERROR) {
+        std::cout << "shutdown() failed with error: " << WSAGetLastError() << "\n";
+        closesocket(ClientSocket_2);
+        WSACleanup();
+        return 1;
     }
 
-    // Закрытие сокетов
-    closesocket(client1_fd);
-    closesocket(client2_fd);
-    closesocket(server_fd);
+    // cleanup
+    closesocket(ClientSocket_1);
+    closesocket(ClientSocket_2);
     WSACleanup();
+
+
     return 0;
 }
