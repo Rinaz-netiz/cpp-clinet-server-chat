@@ -1,5 +1,0 @@
-C:/Code/c++/cpp_client-server/cpp-clinet-server-chat/build/CMakeFiles/client.dir
-C:/Code/c++/cpp_client-server/cpp-clinet-server-chat/build/CMakeFiles/server.dir
-C:/Code/c++/cpp_client-server/cpp-clinet-server-chat/build/CMakeFiles/run_all.dir
-C:/Code/c++/cpp_client-server/cpp-clinet-server-chat/build/CMakeFiles/edit_cache.dir
-C:/Code/c++/cpp_client-server/cpp-clinet-server-chat/build/CMakeFiles/rebuild_cache.dir
