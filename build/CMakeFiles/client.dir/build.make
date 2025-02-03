@@ -75,29 +75,29 @@ CMakeFiles/client.dir/client.cpp.obj: CMakeFiles/client.dir/flags.make
 CMakeFiles/client.dir/client.cpp.obj: C:/Code/c++/cpp_client-server/cpp-clinet-server-chat/client.cpp
 CMakeFiles/client.dir/client.cpp.obj: CMakeFiles/client.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/client.dir/client.cpp.obj"
-	C:\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/client.dir/client.cpp.obj -MF CMakeFiles\client.dir\client.cpp.obj.d -o CMakeFiles\client.dir\client.cpp.obj -c C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\client.cpp
+	C:\MinGW\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/client.dir/client.cpp.obj -MF CMakeFiles\client.dir\client.cpp.obj.d -o CMakeFiles\client.dir\client.cpp.obj -c C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\client.cpp
 
 CMakeFiles/client.dir/client.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/client.dir/client.cpp.i"
-	C:\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\client.cpp > CMakeFiles\client.dir\client.cpp.i
+	C:\MinGW\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\client.cpp > CMakeFiles\client.dir\client.cpp.i
 
 CMakeFiles/client.dir/client.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/client.dir/client.cpp.s"
-	C:\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\client.cpp -o CMakeFiles\client.dir\client.cpp.s
+	C:\MinGW\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\client.cpp -o CMakeFiles\client.dir\client.cpp.s
 
 CMakeFiles/client.dir/des.cpp.obj: CMakeFiles/client.dir/flags.make
 CMakeFiles/client.dir/des.cpp.obj: C:/Code/c++/cpp_client-server/cpp-clinet-server-chat/des.cpp
 CMakeFiles/client.dir/des.cpp.obj: CMakeFiles/client.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/client.dir/des.cpp.obj"
-	C:\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/client.dir/des.cpp.obj -MF CMakeFiles\client.dir\des.cpp.obj.d -o CMakeFiles\client.dir\des.cpp.obj -c C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\des.cpp
+	C:\MinGW\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/client.dir/des.cpp.obj -MF CMakeFiles\client.dir\des.cpp.obj.d -o CMakeFiles\client.dir\des.cpp.obj -c C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\des.cpp
 
 CMakeFiles/client.dir/des.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/client.dir/des.cpp.i"
-	C:\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\des.cpp > CMakeFiles\client.dir\des.cpp.i
+	C:\MinGW\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\des.cpp > CMakeFiles\client.dir\des.cpp.i
 
 CMakeFiles/client.dir/des.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/client.dir/des.cpp.s"
-	C:\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\des.cpp -o CMakeFiles\client.dir\des.cpp.s
+	C:\MinGW\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\des.cpp -o CMakeFiles\client.dir\des.cpp.s
 
 # Object files for target client
 client_OBJECTS = \

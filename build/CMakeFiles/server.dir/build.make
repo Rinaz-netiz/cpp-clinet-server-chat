@@ -75,15 +75,15 @@ CMakeFiles/server.dir/server.cpp.obj: CMakeFiles/server.dir/flags.make
 CMakeFiles/server.dir/server.cpp.obj: C:/Code/c++/cpp_client-server/cpp-clinet-server-chat/server.cpp
 CMakeFiles/server.dir/server.cpp.obj: CMakeFiles/server.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/server.dir/server.cpp.obj"
-	C:\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/server.dir/server.cpp.obj -MF CMakeFiles\server.dir\server.cpp.obj.d -o CMakeFiles\server.dir\server.cpp.obj -c C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\server.cpp
+	C:\MinGW\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/server.dir/server.cpp.obj -MF CMakeFiles\server.dir\server.cpp.obj.d -o CMakeFiles\server.dir\server.cpp.obj -c C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\server.cpp
 
 CMakeFiles/server.dir/server.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/server.dir/server.cpp.i"
-	C:\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\server.cpp > CMakeFiles\server.dir\server.cpp.i
+	C:\MinGW\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\server.cpp > CMakeFiles\server.dir\server.cpp.i
 
 CMakeFiles/server.dir/server.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/server.dir/server.cpp.s"
-	C:\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\server.cpp -o CMakeFiles\server.dir\server.cpp.s
+	C:\MinGW\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Code\c++\cpp_client-server\cpp-clinet-server-chat\server.cpp -o CMakeFiles\server.dir\server.cpp.s
 
 # Object files for target server
 server_OBJECTS = \
