@@ -16,20 +16,6 @@
 #define DEFAULT_PORT "27015"
 #define DEFAULT_BUFLEN 512
 
-
-void send_message(SOCKET sock) {
-    int sent_bytes=1;
-    while (sent_bytes > 0) {
-        std::string message;
-        getline(std::cin, message);
-        sent_bytes = send(sock, message.c_str(), (int)message.length(), 0);
-        if (sent_bytes == SOCKET_ERROR) {
-            std::cout << "Error sending message\n";
-            break;
-        }
-    }
-}
-
 void receive_message(SOCKET sock) {
     int received_bytes=1;
     char recvbuf[DEFAULT_BUFLEN];
@@ -104,15 +90,25 @@ int __cdecl main()
         return 1;
     }
 
-
     // Send a message
     std::cout << "Let's go!" << std::endl;
     std::thread t_r(receive_message, ConnectSocket);
-    std::thread t_s(send_message, ConnectSocket);
+    t_r.detach();
+    while (true) {
+        std::string message;
+        // TODO :: сделать отключение от сервера !!
+        getline(std::cin, message);
+        if(message == "exit") {
+            break;
+        }
+        iResult = send(ConnectSocket, message.c_str(), (int)message.length(), 0);
+        if (iResult == SOCKET_ERROR) {
+            std::cout << "Error sending message\n";
+            break;
+        }
+    }
 
-    t_r.join();
-    t_s.join();
-
+    std::cout << "disconect :/" << std::endl;
     // shutdown the connection since no more data will be sent
     iResult = shutdown(ConnectSocket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
@@ -121,7 +117,6 @@ int __cdecl main()
         WSACleanup();
         return 1;
     }
-    std::cout << "disconect :/" << std::endl;
 
     // cleanup
     closesocket(ConnectSocket);
