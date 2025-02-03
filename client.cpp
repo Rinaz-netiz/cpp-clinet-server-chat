@@ -29,7 +29,7 @@ void send_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
         getline(std::cin, message);
         char* str_end = des_client.Encrypt(message.c_str(), key);
         sent_bytes = send(sock, str_end, (int)strlen(str_end), 0);
-        delete[] str_end;
+        // delete[] str_end;
 
         if (sent_bytes == SOCKET_ERROR) {
             std::cout << "Error sending message\n";
