@@ -4,6 +4,11 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <thread>
+#include <vector>
+#include <string.h>
+#include <functional>
+
+#include "des.h"
 
 
 
@@ -17,12 +22,15 @@
 #define DEFAULT_BUFLEN 512
 
 
-void send_message(SOCKET sock) {
+void send_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
     int sent_bytes=1;
     while (sent_bytes > 0) {
         std::string message;
         getline(std::cin, message);
-        sent_bytes = send(sock, message.c_str(), (int)message.length(), 0);
+        char* str_end = des_client.Encrypt(message.c_str(), key);
+        sent_bytes = send(sock, str_end, (int)strlen(str_end), 0);
+        delete[] str_end;
+
         if (sent_bytes == SOCKET_ERROR) {
             std::cout << "Error sending message\n";
             break;
@@ -30,7 +38,7 @@ void send_message(SOCKET sock) {
     }
 }
 
-void receive_message(SOCKET sock) {
+void receive_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
     int received_bytes=1;
     char recvbuf[DEFAULT_BUFLEN];
     int recvbuflen = DEFAULT_BUFLEN;
@@ -41,7 +49,10 @@ void receive_message(SOCKET sock) {
             std::cout << "Error receiving message\n";
             break;
         }
-        std::cout << recvbuf << std::endl;
+
+        const char* str_dec = des_client.Decrypt(recvbuf, key);
+        std::cout << str_dec << std::endl;
+        delete[] str_dec;
     }
 }
 
@@ -104,11 +115,20 @@ int __cdecl main()
         return 1;
     }
 
+    // get password
+    std::vector<int> key(KEY_LEN);
+    std::string password;
+    std::cout << "Enter your key(8 characters): ";
+    getline(std::cin, password);
+    des::key_to_binary(key, password);
+
+    // create Des
+    des::Des des_client;
 
     // Send a message
     std::cout << "Let's go!" << std::endl;
-    std::thread t_r(receive_message, ConnectSocket);
-    std::thread t_s(send_message, ConnectSocket);
+    std::thread t_r(receive_message, ConnectSocket, std::ref(des_client), std::ref(key));
+    std::thread t_s(send_message, ConnectSocket, std::ref(des_client), std::ref(key));
 
     t_r.join();
     t_s.join();
