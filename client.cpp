@@ -21,7 +21,6 @@
 #define DEFAULT_BUFLEN 512
 
 void receive_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
-
     int received_bytes=1;
     char recvbuf[DEFAULT_BUFLEN];
     int recvbuflen = DEFAULT_BUFLEN;
@@ -108,10 +107,9 @@ int __cdecl main()
     // create Des
     des::Des des_client;
 
-
     // Send a message
     std::cout << "Let's go!" << std::endl;
-    std::thread t_r(receive_message, ConnectSocket);
+    std::thread t_r(receive_message, ConnectSocket, std::ref(des_client), std::ref(key));
     t_r.detach();
     while (true) {
         std::string message;
@@ -121,13 +119,12 @@ int __cdecl main()
         if(message == "exit") {
             break;
         }
-        iResult = send(ConnectSocket, str_end, (int)message.length(), 0);
+        iResult = send(ConnectSocket, str_end, (int)strlen(str_end), 0);
         if (iResult == SOCKET_ERROR) {
             std::cout << "Error sending message\n";
             break;
         }
     }
-
 
     std::cout << "disconect :/" << std::endl;
     // shutdown the connection since no more data will be sent
