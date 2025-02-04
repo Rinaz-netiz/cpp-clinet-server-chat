@@ -4,7 +4,11 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <thread>
+#include <vector>
+#include <string.h>
+#include <functional>
 
+#include "des.h"
 
 
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
@@ -16,7 +20,8 @@
 #define DEFAULT_PORT "27015"
 #define DEFAULT_BUFLEN 512
 
-void receive_message(SOCKET sock) {
+void receive_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
+
     int received_bytes=1;
     char recvbuf[DEFAULT_BUFLEN];
     int recvbuflen = DEFAULT_BUFLEN;
@@ -27,7 +32,10 @@ void receive_message(SOCKET sock) {
             std::cout << "Error receiving message\n";
             break;
         }
-        std::cout << recvbuf << std::endl;
+
+        const char* str_dec = des_client.Decrypt(recvbuf, key);
+        std::cout << str_dec << std::endl;
+        delete[] str_dec;
     }
 }
 
@@ -89,6 +97,17 @@ int __cdecl main()
         WSACleanup();
         return 1;
     }
+  
+      // get password
+    std::vector<int> key(KEY_LEN);
+    std::string password;
+    std::cout << "Enter your key(8 characters): ";
+    getline(std::cin, password);
+    des::key_to_binary(key, password);
+
+    // create Des
+    des::Des des_client;
+
 
     // Send a message
     std::cout << "Let's go!" << std::endl;
@@ -98,15 +117,17 @@ int __cdecl main()
         std::string message;
         // TODO :: сделать отключение от сервера !!
         getline(std::cin, message);
+        char* str_end = des_client.Encrypt(message.c_str(), key);
         if(message == "exit") {
             break;
         }
-        iResult = send(ConnectSocket, message.c_str(), (int)message.length(), 0);
+        iResult = send(ConnectSocket, str_end, (int)message.length(), 0);
         if (iResult == SOCKET_ERROR) {
             std::cout << "Error sending message\n";
             break;
         }
     }
+
 
     std::cout << "disconect :/" << std::endl;
     // shutdown the connection since no more data will be sent
