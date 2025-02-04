@@ -20,24 +20,8 @@
 #define DEFAULT_PORT "27015"
 #define DEFAULT_BUFLEN 512
 
-
-void send_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
-    int sent_bytes=1;
-    while (sent_bytes > 0) {
-        std::string message;
-        getline(std::cin, message);
-        char* str_end = des_client.Encrypt(message.c_str(), key);
-        sent_bytes = send(sock, str_end, (int)strlen(str_end), 0);
-        // delete[] str_end;
-
-        if (sent_bytes == SOCKET_ERROR) {
-            std::cout << "Error sending message\n";
-            break;
-        }
-    }
-}
-
 void receive_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
+
     int received_bytes=1;
     char recvbuf[DEFAULT_BUFLEN];
     int recvbuflen = DEFAULT_BUFLEN;
@@ -113,8 +97,8 @@ int __cdecl main()
         WSACleanup();
         return 1;
     }
-
-    // get password
+  
+      // get password
     std::vector<int> key(KEY_LEN);
     std::string password;
     std::cout << "Enter your key(8 characters): ";
@@ -124,14 +108,28 @@ int __cdecl main()
     // create Des
     des::Des des_client;
 
+
     // Send a message
     std::cout << "Let's go!" << std::endl;
-    std::thread t_r(receive_message, ConnectSocket, std::ref(des_client), std::ref(key));
-    std::thread t_s(send_message, ConnectSocket, std::ref(des_client), std::ref(key));
+    std::thread t_r(receive_message, ConnectSocket);
+    t_r.detach();
+    while (true) {
+        std::string message;
+        // TODO :: сделать отключение от сервера !!
+        getline(std::cin, message);
+        char* str_end = des_client.Encrypt(message.c_str(), key);
+        if(message == "exit") {
+            break;
+        }
+        iResult = send(ConnectSocket, str_end, (int)message.length(), 0);
+        if (iResult == SOCKET_ERROR) {
+            std::cout << "Error sending message\n";
+            break;
+        }
+    }
 
-    t_r.join();
-    t_s.join();
 
+    std::cout << "disconect :/" << std::endl;
     // shutdown the connection since no more data will be sent
     iResult = shutdown(ConnectSocket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
@@ -140,7 +138,6 @@ int __cdecl main()
         WSACleanup();
         return 1;
     }
-    std::cout << "disconect :/" << std::endl;
 
     // cleanup
     closesocket(ConnectSocket);

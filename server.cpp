@@ -1,5 +1,6 @@
 #undef UNICODE
 
+#include <future>
 #include <iostream>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -12,24 +13,29 @@
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
 
-void message(SOCKET sock_r, SOCKET sock_s) {
+void message(SOCKET* sock_r, SOCKET* sock_s) {
     int iResult=1;
     char recvbuf[DEFAULT_BUFLEN];
     while (iResult > 0) {
+
+
         memset(recvbuf, 0, DEFAULT_BUFLEN);
-        iResult = recv(sock_r, recvbuf, DEFAULT_BUFLEN, 0);
+        iResult = recv(*sock_r, recvbuf, DEFAULT_BUFLEN, 0);
         if (iResult == SOCKET_ERROR) {
-            std::cout << "recv failed. Error: " << WSAGetLastError() << std::endl;
+            std::cout << "recv failed. Error: " << WSAGetLastError() << "; disconect" << std::endl;
+            *sock_r = INVALID_SOCKET;
             break;
         }
 
-        iResult = send(sock_s, recvbuf, DEFAULT_BUFLEN, 0);
+        iResult = send(*sock_s, recvbuf, DEFAULT_BUFLEN, 0);
         if (iResult == SOCKET_ERROR) {
-            std::cout << "send failed. Error: " << WSAGetLastError() << std::endl;
+            std::cout << "send failed. Error: " << WSAGetLastError() << "; disconect" << std::endl;
+            *sock_s = INVALID_SOCKET;
             break;
         }
     }
 }
+
 
 int __cdecl main()
 {
@@ -97,34 +103,40 @@ int __cdecl main()
     std::cout << "Waiting for a connection...\n";
 
     // Accept a client socket
-    ClientSocket_1 = accept(ListenSocket, nullptr, nullptr);
-    if (ClientSocket_1 == INVALID_SOCKET) {
-        std::cout << "accept() failed with error: " << WSAGetLastError() << "\n";
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-    std::cout << "Connection 1 established.\n";
 
-    ClientSocket_2 = accept(ListenSocket, nullptr, nullptr);
-    if (ClientSocket_2 == INVALID_SOCKET) {
-        std::cout << "accept() failed with error: " << WSAGetLastError() << "\n";
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-    std::cout << "Connection 2 established.\n";
+    //TODO сделать выход из цикла
+    while(true) {
+        //TODO выход по esc
+        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
+            std::cout << "shutdown server" << std::endl;
+            break;
+        }
 
-    // No longer need server socket
+        auto client = INVALID_SOCKET;
+        client = accept(ListenSocket, nullptr, nullptr);
+        if (ClientSocket_1 == INVALID_SOCKET) {
+            ClientSocket_1 = client;
+            std::cout << "connection established" << std::endl;
+        }
+        else if (ClientSocket_2 == INVALID_SOCKET) {
+            ClientSocket_2 = client;
+            std::cout << "connection established" << std::endl;
+        }
+        if(ClientSocket_1 != INVALID_SOCKET && ClientSocket_2 != INVALID_SOCKET) {
+            std::cout << "chating in progress.." << std::endl;
+            std::thread t1(message, &ClientSocket_1, &ClientSocket_2);
+            t1.detach();
+            std::thread t2(message, &ClientSocket_2, &ClientSocket_1);
+            t2.detach();
+        }
+    }
+
+    // TODO :: написать thread pool
+    // TODO :: поменять на pthread
+    // TODO :: мб помеянть логику перессылки(каждый раз подключаться к TP)
+
+
     closesocket(ListenSocket);
-
-    // Receive until the peer shuts down the connection
-    std::cout << "Ready for chat\n";
-    std::thread t1(message, ClientSocket_1, ClientSocket_2);
-    std::thread t2(message, ClientSocket_2, ClientSocket_1);
-    t1.join();
-    t2.join();
-
 
     // shutdown the connection since we're done
     iResult = shutdown(ClientSocket_1, SD_SEND);
