@@ -9,7 +9,7 @@ add_executable(client client.cpp des.cpp)
 target_link_libraries(client ws2_32)  # Подключение библиотеки Winsock для клиента
 
 # Серверная часть
-add_executable(server server.cpp)
+add_executable(server server.cpp client_socket.cpp client_socket.h)
 target_link_libraries(server ws2_32)  # Подключение библиотеки Winsock для сервера
 
 
