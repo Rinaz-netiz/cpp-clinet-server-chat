@@ -5,6 +5,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <thread>
+#include "client_socket.h"
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -13,44 +14,78 @@
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
 
-void message(SOCKET* sock_r, SOCKET* sock_s) {
+SOCKET create_socket();
+
+void message(client_socket& sock_r, client_socket& sock_s) {
     int iResult=1;
     char recvbuf[DEFAULT_BUFLEN];
     while (iResult > 0) {
-
-
         memset(recvbuf, 0, DEFAULT_BUFLEN);
-        iResult = recv(*sock_r, recvbuf, DEFAULT_BUFLEN, 0);
+        iResult = recv(sock_r.client, recvbuf, DEFAULT_BUFLEN, 0);
         if (iResult == SOCKET_ERROR) {
-            std::cout << "recv failed. Error: " << WSAGetLastError() << "; disconect" << std::endl;
-            *sock_r = INVALID_SOCKET;
+            std::cout << "recv failed. Error: " << WSAGetLastError() << std::endl;
+            sock_r.disconnect();
             break;
         }
 
-        iResult = send(*sock_s, recvbuf, DEFAULT_BUFLEN, 0);
-        if (iResult == SOCKET_ERROR) {
-            std::cout << "send failed. Error: " << WSAGetLastError() << "; disconect" << std::endl;
-            *sock_s = INVALID_SOCKET;
+        iResult = send(sock_s.client, recvbuf, DEFAULT_BUFLEN, 0);
+        if (iResult == SOCKET_ERROR)
             break;
-        }
     }
 }
+
+void connection(client_socket& client_1, client_socket& client_2, SOCKET& server) {
+    while (server != INVALID_SOCKET) {
+        if (client_1.client == INVALID_SOCKET)
+            client_1.connect(server);
+        if (client_2.client == INVALID_SOCKET)
+            client_2.connect(server);
+        if (client_1.client != INVALID_SOCKET && client_2.client != INVALID_SOCKET) {
+            std::thread t1(message, std::ref(client_1), std::ref(client_2));
+            std::thread t2(message, std::ref(client_2), std::ref(client_1));
+            std::cout << "Connection established." << std::endl;
+            t1.join();
+            t2.join();
+        }
+
+    }
+
+}
+
 
 
 int __cdecl main()
 {
+    SOCKET listen_sock = create_socket();
+
+    client_socket client_1, client_2;
+    // Accept a client socket
+    std::thread connect(connection, std::ref(client_1), std::ref(client_2), std::ref(listen_sock));
+    connect.detach();
+
+    while(true) {
+        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
+            std::cout << "shutdown server" << std::endl;
+            break;
+        }
+    }
+
+    closesocket(listen_sock);
+
+    WSACleanup();
+
+    return 0;
+}
+
+
+SOCKET create_socket() {
     WSADATA wsaData;
     int iResult;
 
     auto ListenSocket = INVALID_SOCKET;
-    auto ClientSocket_1 = INVALID_SOCKET, ClientSocket_2 = INVALID_SOCKET;
 
     addrinfo *result = nullptr;
     addrinfo hints{};
-
-    int iSendResult;
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
 
     // Initialize Winsock
     iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -101,64 +136,5 @@ int __cdecl main()
         return 1;
     }
     std::cout << "Waiting for a connection...\n";
-
-    // Accept a client socket
-
-    //TODO сделать выход из цикла
-    while(true) {
-        //TODO выход по esc
-        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
-            std::cout << "shutdown server" << std::endl;
-            break;
-        }
-
-        auto client = INVALID_SOCKET;
-        client = accept(ListenSocket, nullptr, nullptr);
-        if (ClientSocket_1 == INVALID_SOCKET) {
-            ClientSocket_1 = client;
-            std::cout << "connection established" << std::endl;
-        }
-        else if (ClientSocket_2 == INVALID_SOCKET) {
-            ClientSocket_2 = client;
-            std::cout << "connection established" << std::endl;
-        }
-        if(ClientSocket_1 != INVALID_SOCKET && ClientSocket_2 != INVALID_SOCKET) {
-            std::cout << "chating in progress.." << std::endl;
-            std::thread t1(message, &ClientSocket_1, &ClientSocket_2);
-            t1.detach();
-            std::thread t2(message, &ClientSocket_2, &ClientSocket_1);
-            t2.detach();
-        }
-    }
-
-    // TODO :: написать thread pool
-    // TODO :: поменять на pthread
-    // TODO :: мб помеянть логику перессылки(каждый раз подключаться к TP)
-
-
-    closesocket(ListenSocket);
-
-    // shutdown the connection since we're done
-    iResult = shutdown(ClientSocket_1, SD_SEND);
-    if (iResult == SOCKET_ERROR) {
-        std::cout << "shutdown() failed with error: " << WSAGetLastError() << "\n";
-        closesocket(ClientSocket_1);
-        WSACleanup();
-        return 1;
-    }
-    iResult = shutdown(ClientSocket_2, SD_SEND);
-    if (iResult == SOCKET_ERROR) {
-        std::cout << "shutdown() failed with error: " << WSAGetLastError() << "\n";
-        closesocket(ClientSocket_2);
-        WSACleanup();
-        return 1;
-    }
-
-    // cleanup
-    closesocket(ClientSocket_1);
-    closesocket(ClientSocket_2);
-    WSACleanup();
-
-
-    return 0;
+    return ListenSocket;
 }

@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS//это директива для совместимости функций, пусть стоит здесь
 
-#include <string.h>
+#include <cstring>
 #include <string>
 #include <vector>
 
