@@ -4,13 +4,18 @@ project(cpp_clinet_server_chat)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Логер
+add_library(logger STATIC logger.cpp)
+
 # Клиентская часть
 add_executable(client client.cpp des.cpp)
-target_link_libraries(client ws2_32)  # Подключение библиотеки Winsock для клиента
+target_link_libraries(client ws2_32 logger)
 
 # Серверная часть
-add_executable(server server.cpp client_socket.cpp client_socket.h)
-target_link_libraries(server ws2_32)  # Подключение библиотеки Winsock для сервера
+add_executable(server server.cpp client_socket.cpp)
+target_link_libraries(server ws2_32 logger)
+
+
 
 
 add_custom_target(run_all
