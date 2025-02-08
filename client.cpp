@@ -25,21 +25,22 @@
 
 SOCKET create_socket();
 
-void receive_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
-    int received_bytes=1;
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
-    while (received_bytes > 0) {
-        memset(recvbuf, 0, recvbuflen);
-        received_bytes = recv(sock, recvbuf, recvbuflen, 0);
-        if (received_bytes == SOCKET_ERROR) {
-            std::cout << "Error receiving message\n";
+void send_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
+    int iResult = 1;
+    while (true) {
+        std::string message;
+        getline(std::cin, message);
+        if(message == "exit") {
             break;
         }
+        char* str_end = des_client.Encrypt(message.c_str(), key);
 
-        const char* str_dec = des_client.Decrypt(recvbuf, key);
-        std::cout << str_dec << std::endl;
-        delete[] str_dec;
+        iResult = send(sock, str_end, (int)strlen(str_end), 0);
+
+        if (iResult == SOCKET_ERROR) {
+            std::cout << "Error sending message\n";
+            break;
+        }
     }
 }
 
@@ -61,23 +62,26 @@ int __cdecl main()
     // Send a message
     std::cout << "Let's go!" << std::endl;
     std::cout << "print 'exit' to leave" << std::endl;
-    std::thread t_r(receive_message, ConnectSocket, std::ref(des_client), std::ref(key));
+    std::thread t_r(send_message, ConnectSocket, std::ref(des_client), std::ref(key));
     t_r.detach();
-    while (true) {
-        std::string message;
-        getline(std::cin, message);
-        if(message == "exit") {
-            break;
-        }
-        char* str_end = des_client.Encrypt(message.c_str(), key);
 
-        iResult = send(ConnectSocket, str_end, (int)strlen(str_end), 0);
-
+    char recvbuf[DEFAULT_BUFLEN];
+    int recvbuflen = DEFAULT_BUFLEN;
+    iResult=1;
+    while (iResult > 0) {
+        memset(recvbuf, 0, recvbuflen);
+        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
         if (iResult == SOCKET_ERROR) {
-            std::cout << "Error sending message\n";
+            std::cout << "Error receiving message\n";
             break;
         }
+
+        const char* str_dec = des_client.Decrypt(recvbuf, key);
+        std::cout << str_dec << std::endl;
+        delete[] str_dec;
     }
+
+
 
     std::cout << "disconect :/" << std::endl;
     closesocket(ConnectSocket);
