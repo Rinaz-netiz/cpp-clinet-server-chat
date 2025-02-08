@@ -25,7 +25,7 @@
 
 SOCKET create_socket();
 
-void send_message(SOCKET sock, des::Des& des_client, std::vector<int> &key) {
+void send_message(SOCKET sock, Des& des_client, std::vector<int> &key) {
     int iResult = 1;
     while (true) {
         std::string message;
@@ -54,10 +54,10 @@ int __cdecl main()
     std::string password;
     std::cout << "Enter your key(8 characters or more): ";
     getline(std::cin, password);
-    des::key_to_binary(key, password);
+    key_to_binary(key, password);
 
     // create Des
-    des::Des des_client;
+    Des des_client;
 
     // Send a message
     std::cout << "Let's go!" << std::endl;
