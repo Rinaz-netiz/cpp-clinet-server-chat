@@ -5,7 +5,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <thread>
+
 #include "client_socket.h"
+#include "logger.h"
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -14,16 +16,17 @@
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
 
-SOCKET create_socket();
+SOCKET create_socket(Logger&);
 
-void message(client_socket& sock_r, client_socket& sock_s) {
+void message(Logger& logger, client_socket& sock_r, client_socket& sock_s) {
     int iResult=1;
     char recvbuf[DEFAULT_BUFLEN];
     while (iResult > 0) {
         memset(recvbuf, 0, DEFAULT_BUFLEN);
         iResult = recv(sock_r.client, recvbuf, DEFAULT_BUFLEN, 0);
         if (iResult == SOCKET_ERROR) {
-            std::cout << "recv failed. Error: " << WSAGetLastError() << std::endl;
+            std::string error_msg = "recv failed. Error: " + std::to_string(WSAGetLastError());
+            logger.log(LogLevel::ERROR_, error_msg);
             sock_r.disconnect();
             break;
         }
@@ -34,16 +37,16 @@ void message(client_socket& sock_r, client_socket& sock_s) {
     }
 }
 
-void connection(client_socket& client_1, client_socket& client_2, SOCKET& server) {
+void connection(Logger& logger, client_socket& client_1, client_socket& client_2, SOCKET& server) {
     while (server != INVALID_SOCKET) {
         if (client_1.client == INVALID_SOCKET)
             client_1.connect(server);
         if (client_2.client == INVALID_SOCKET)
             client_2.connect(server);
         if (client_1.client != INVALID_SOCKET && client_2.client != INVALID_SOCKET) {
-            std::thread t1(message, std::ref(client_1), std::ref(client_2));
-            std::thread t2(message, std::ref(client_2), std::ref(client_1));
-            std::cout << "Connection established." << std::endl;
+            std::thread t1(message, std::ref(logger), std::ref(client_1), std::ref(client_2));
+            std::thread t2(message, std::ref(logger), std::ref(client_2), std::ref(client_1));
+            logger.log(LogLevel::INFO, "Connection established.");
             t1.join();
             t2.join();
         }
@@ -56,16 +59,17 @@ void connection(client_socket& client_1, client_socket& client_2, SOCKET& server
 
 int __cdecl main()
 {
-    SOCKET listen_sock = create_socket();
+    Logger& logger = Logger::getInstance();
+    SOCKET listen_sock = create_socket(logger);
 
     client_socket client_1, client_2;
     // Accept a client socket
-    std::thread connect(connection, std::ref(client_1), std::ref(client_2), std::ref(listen_sock));
+    std::thread connect(connection, std::ref(logger), std::ref(client_1), std::ref(client_2), std::ref(listen_sock));
     connect.detach();
 
     while(true) {
         if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
-            std::cout << "shutdown server" << std::endl;
+            logger.log(LogLevel::INFO, "shutdown server");
             break;
         }
     }
@@ -78,7 +82,7 @@ int __cdecl main()
 }
 
 
-SOCKET create_socket() {
+SOCKET create_socket(Logger& logger) {
     WSADATA wsaData;
     int iResult;
 
@@ -90,7 +94,8 @@ SOCKET create_socket() {
     // Initialize Winsock
     iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
     if (iResult != 0) {
-        printf("WSAStartup failed with error: %d\n", iResult);
+        std::string error_msg = "WSAStartup failed with error: " + std::to_string(iResult);
+        logger.log(LogLevel::ERROR_, error_msg);
         return 1;
     }
 
@@ -102,7 +107,8 @@ SOCKET create_socket() {
     // Resolve the server address and port
     iResult = getaddrinfo(nullptr, DEFAULT_PORT, &hints, &result);
     if ( iResult != 0 ) {
-        std::cout << "getaddrinfo failed with error: " << iResult << "\n";
+        std::string error_msg = "getaddrinfo failed with error: " + std::to_string(iResult);
+        logger.log(LogLevel::ERROR_, error_msg);
         WSACleanup();
         return 1;
     }
@@ -110,7 +116,8 @@ SOCKET create_socket() {
     // Create a SOCKET for the server to listen for client connections.
     ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (ListenSocket == INVALID_SOCKET) {
-        std::cout << "socket() failed with error: " << WSAGetLastError() << "\n";
+        std::string error_msg = "socket() failed with error: " + std::to_string(WSAGetLastError());
+        logger.log(LogLevel::ERROR_, error_msg);
         freeaddrinfo(result);
         WSACleanup();
         return 1;
@@ -119,7 +126,8 @@ SOCKET create_socket() {
     // Setup the TCP listening socket
     iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
     if (iResult == SOCKET_ERROR) {
-        std::cout << "bind() failed with error: " << WSAGetLastError() << "\n";
+        std::string error_msg = "bind() failed with error: " + std::to_string(WSAGetLastError());
+        logger.log(LogLevel::ERROR_, error_msg);
         freeaddrinfo(result);
         closesocket(ListenSocket);
         WSACleanup();
@@ -130,11 +138,12 @@ SOCKET create_socket() {
 
     iResult = listen(ListenSocket, SOMAXCONN);
     if (iResult == SOCKET_ERROR) {
-        std::cout << "listen() failed with error: " << WSAGetLastError() << "\n";
+        std::string error_msg = "listen() failed with error: " + std::to_string(WSAGetLastError());
+        logger.log(LogLevel::ERROR_, error_msg);
         closesocket(ListenSocket);
         WSACleanup();
         return 1;
     }
-    std::cout << "Waiting for a connection...\n";
+    logger.log(LogLevel::INFO, "Waiting for a connection...");
     return ListenSocket;
 }

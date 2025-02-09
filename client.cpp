@@ -9,6 +9,7 @@
 #include <functional>
 
 #include "des.h"
+#include "logger.h"
 
 
 //todo переделать клиентв
@@ -23,22 +24,28 @@
 #define DEFAULT_PORT "27015"
 #define DEFAULT_BUFLEN 512
 
-SOCKET create_socket();
+SOCKET create_socket(Logger&);
 
-void send_message(SOCKET sock, Des& des_client, std::vector<int> &key) {
+void send_message(Logger& logger, SOCKET sock, Des& des_client, std::vector<int> &key) {
     int iResult = 1;
     while (true) {
         std::string message;
         getline(std::cin, message);
-        if(message == "exit") {
-            break;
-        }
+
+        if(message == "exit")
+            message = "**Your interlocutor has left.**";
+
         char* str_end = des_client.Encrypt(message.c_str(), key);
 
         iResult = send(sock, str_end, (int)strlen(str_end), 0);
 
+        if(message == "exit") {
+            logger.log(LogLevel::INFO, "You have gone out from session");
+            break;
+        }
+
         if (iResult == SOCKET_ERROR) {
-            std::cout << "Error sending message\n";
+            logger.log(LogLevel::ERROR_, "Error sending message\n");
             break;
         }
     }
@@ -46,8 +53,11 @@ void send_message(SOCKET sock, Des& des_client, std::vector<int> &key) {
 
 int __cdecl main()
 {
+    Logger& logger = Logger::getInstance();
+    logger.setLogLevel(LogLevel::INFO);
+
     int iResult;
-    SOCKET ConnectSocket = create_socket();
+    SOCKET ConnectSocket = create_socket(logger);
   
       // get password
     std::vector<int> key(KEY_LEN);
@@ -60,9 +70,11 @@ int __cdecl main()
     Des des_client;
 
     // Send a message
-    std::cout << "Let's go!" << std::endl;
-    std::cout << "print 'exit' to leave" << std::endl;
-    std::thread t_r(send_message, ConnectSocket, std::ref(des_client), std::ref(key));
+    // std::cout << "Let's go!" << std::endl;
+    logger.log(LogLevel::INFO, "Client is running");
+
+    std::cout << "write 'exit' to leave" << std::endl;
+    std::thread t_r(send_message, std::ref(logger), ConnectSocket, std::ref(des_client), std::ref(key));
     t_r.detach();
 
     char recvbuf[DEFAULT_BUFLEN];
@@ -72,7 +84,7 @@ int __cdecl main()
         memset(recvbuf, 0, recvbuflen);
         iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
         if (iResult == SOCKET_ERROR) {
-            std::cout << "Error receiving message\n";
+            logger.log(LogLevel::ERROR_, "Error receiving message");
             break;
         }
 
@@ -82,15 +94,14 @@ int __cdecl main()
     }
 
 
-
-    std::cout << "disconect :/" << std::endl;
+    logger.log(LogLevel::INFO, "disconect :");
     closesocket(ConnectSocket);
     WSACleanup();
 
     return 0;
 }
 
-SOCKET create_socket() {
+SOCKET create_socket(Logger& logger) {
     WSADATA wsaData;
     auto ConnectSocket = INVALID_SOCKET;
     addrinfo *result = nullptr,
@@ -102,7 +113,8 @@ SOCKET create_socket() {
     // Initialize Winsock
     iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
     if (iResult != 0) {
-        std::cout << "WSAStartup failed with error: " << iResult << std::endl;
+        std::string errorMessage = "WSAStartup failed with error: " + std::to_string(iResult);
+        logger.log(LogLevel::ERROR_, errorMessage);
         return 1;
     }
 
@@ -113,7 +125,8 @@ SOCKET create_socket() {
     // Resolve the server address and port
     iResult = getaddrinfo(nullptr, DEFAULT_PORT, &hints, &result);
     if ( iResult != 0 ) {
-        std::cout << "getaddrinfo failed with error: " << iResult << std::endl;
+        std::string errorMessage = "getaddrinfo failed with error: " + std::to_string(iResult);
+        logger.log(LogLevel::ERROR_, errorMessage);
         WSACleanup();
         return 1;
     }
@@ -125,7 +138,8 @@ SOCKET create_socket() {
         ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
             ptr->ai_protocol);
         if (ConnectSocket == INVALID_SOCKET) {
-            std::cout << "socket failed with error: " << WSAGetLastError() << std::endl;
+            std::string errorMessage = "socket failed with error: " + std::to_string(WSAGetLastError());
+            logger.log(LogLevel::ERROR_, errorMessage);
             WSACleanup();
             return 1;
         }
@@ -143,7 +157,7 @@ SOCKET create_socket() {
     freeaddrinfo(result);
 
     if (ConnectSocket == INVALID_SOCKET) {
-        std::cout << "unable to connect to server" << std::endl;
+        logger.log(LogLevel::ERROR_, "unable to connect to server");
         WSACleanup();
         return INVALID_SOCKET;
     }

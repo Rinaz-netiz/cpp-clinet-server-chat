@@ -1,9 +1,6 @@
-//
-// Created by artem on 06.02.2025.
-//
-
 #ifndef CLIENT_SOCKET_H
 #define CLIENT_SOCKET_H
+
 #include <basetsd.h>
 #include <psdk_inc/_socket_types.h>
 

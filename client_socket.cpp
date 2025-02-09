@@ -1,7 +1,3 @@
-//
-// Created by artem on 06.02.2025.
-//
-
 #include "client_socket.h"
 #include <iostream>
 #include <winsock2.h>
@@ -16,5 +12,5 @@ void client_socket::connect(SOCKET l_sock) {
 void client_socket::disconnect(){
     closesocket(client_socket::client);
     client_socket::client = INVALID_SOCKET;
-    std::cout << "client disconected " << std::endl;
+    std::cout << "client is disconnected " << std::endl;
 }
