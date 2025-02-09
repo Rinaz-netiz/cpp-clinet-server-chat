@@ -31,13 +31,19 @@ void send_message(Logger& logger, SOCKET sock, Des& des_client, std::vector<int>
     while (true) {
         std::string message;
         getline(std::cin, message);
-        if(message == "exit") {
-            logger.log(LogLevel::INFO, "You have gone out from session");
-            break;
-        }
+
+        if(message == "exit")
+            message = "**Your interlocutor has left.**";
+
         char* str_end = des_client.Encrypt(message.c_str(), key);
 
         iResult = send(sock, str_end, (int)strlen(str_end), 0);
+
+        if(message == "exit") {
+            logger.log(LogLevel::INFO, "You have gone out from session");
+            char* str_end = des_client.Encrypt(message.c_str(), key);
+            break;
+        }
 
         if (iResult == SOCKET_ERROR) {
             logger.log(LogLevel::ERROR_, "Error sending message\n");
