@@ -41,7 +41,6 @@ void send_message(Logger& logger, SOCKET sock, Des& des_client, std::vector<int>
 
         if(message == "exit") {
             logger.log(LogLevel::INFO, "You have gone out from session");
-            char* str_end = des_client.Encrypt(message.c_str(), key);
             break;
         }
 
