@@ -1,11 +1,6 @@
 # cpp-clinet-server-char
 
 # How to start project
-1. `mkdir build`
-2. `cd build`
-3. `cmake -G "MinGW Makefiles" ..`
-4. `mingw32-make`
-5. Create `log` directory
-6Run `run_server_and_client.bat`
+1. run `run_project.bat` in windows
 
 If fifth step doesn't work, you should install MinGW from [here](https://nuwen.net/mingw.html). For those interested [more detailed](https://www.reddit.com/r/cpp_questions/comments/1ahy42i/cout_does_not_output_anything_in_windows/?rdt=55708)
