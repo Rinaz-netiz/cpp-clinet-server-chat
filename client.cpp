@@ -43,7 +43,7 @@ void send_message(Logger& logger, SOCKET sock, Des& des_client, std::vector<int>
         }
 
         if (iResult == SOCKET_ERROR) {
-            logger.log(LogLevel::ERROR_, "Error sending message\n");
+            logger.log(LogLevel::ERROR_, "Error sending message");
             break;
         }
     }
@@ -52,12 +52,13 @@ void send_message(Logger& logger, SOCKET sock, Des& des_client, std::vector<int>
 int __cdecl main()
 {
     Logger& logger = Logger::getInstance();
+    set_color_mode();
     logger.setLogLevel(LogLevel::INFO);
 
     int iResult;
     SOCKET ConnectSocket = create_socket(logger);
   
-      // get password
+    // get password
     std::vector<int> key(KEY_LEN);
     std::string password;
 
