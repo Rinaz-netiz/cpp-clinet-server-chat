@@ -53,7 +53,6 @@ int __cdecl main()
 {
     Logger& logger = Logger::getInstance();
     logger.setLogLevel(LogLevel::INFO);
-    set_color_mode();
 
     int iResult;
     SOCKET ConnectSocket = create_socket(logger);

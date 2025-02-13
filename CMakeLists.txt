@@ -16,7 +16,7 @@ target_link_libraries(client ws2_32 logger utils)
 
 # Серверная часть
 add_executable(server server.cpp client_socket.cpp)
-target_link_libraries(server ws2_32 logger)
+target_link_libraries(server ws2_32 logger utils)
 
 
 

@@ -62,6 +62,7 @@ int __cdecl main()
     Logger& logger = Logger::getInstance();
     SOCKET listen_sock = create_socket(logger);
 
+
     client_socket client_1, client_2;
     // Accept a client socket
     std::thread connect(connection, std::ref(logger), std::ref(client_1), std::ref(client_2), std::ref(listen_sock));
