@@ -7,7 +7,7 @@
 #include <thread>
 
 #include "client_socket.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")

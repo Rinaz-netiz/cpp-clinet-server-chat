@@ -13,5 +13,4 @@ class client_socket {
 };
 
 
-
 #endif //CLIENT_SOCKET_H
