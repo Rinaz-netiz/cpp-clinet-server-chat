@@ -11,6 +11,6 @@
 #define BOLD    "\033[1m"
 
 void set_color_mode();
-void get_correct_password(std::string &, const std::string &msg = "", const std::string& error_msg = "Your password is incorrect");
+void get_correct_password(std::string &, const std::string &msg = "", const std::string& error_msg = "Your password is incorrect. It doesn't have enough letters");
 
 #endif //UTILS_H

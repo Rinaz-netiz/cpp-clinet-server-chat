@@ -37,7 +37,7 @@ void get_correct_password(std::string &password, const std::string& msg, const s
         std::cout << msg << std::endl;
 
     getline(std::cin, password);
-    while (password.empty()) {
+    while (password.length() < 8) {
         std::cout << RED << error_msg << RESET << std::endl;
         getline(std::cin, password);
     }
