@@ -1,6 +1,9 @@
 #include "logger.h"
 
 #include <map>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
 // for easily print
 std::map<LogLevel, std::string> logLevelMap = {
@@ -31,10 +34,6 @@ Logger& Logger::getInstance() {
 void Logger::setLogLevel(LogLevel level) {
     currentLevel = level;
 }
-
-#include <chrono>
-#include <iomanip>
-#include <sstream>
 
 // В методе log добавим получение текущего времени
 void Logger::log(LogLevel level, const std::string& message) {
