@@ -5,16 +5,18 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Логер
-add_library(logger STATIC logger.cpp)
+add_library(logger STATIC logger/logger.cpp)
+
+# Утилиты (utils)
+add_library(utils STATIC utils/utils.cpp)
 
 # Клиентская часть
 add_executable(client client.cpp des.cpp)
-target_link_libraries(client ws2_32 logger)
+target_link_libraries(client ws2_32 logger utils)
 
 # Серверная часть
 add_executable(server server.cpp client_socket.cpp)
-target_link_libraries(server ws2_32 logger)
-
+target_link_libraries(server ws2_32 logger utils)
 
 
 

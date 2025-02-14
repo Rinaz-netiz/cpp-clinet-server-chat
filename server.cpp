@@ -7,7 +7,7 @@
 #include <thread>
 
 #include "client_socket.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -61,6 +61,7 @@ int __cdecl main()
 {
     Logger& logger = Logger::getInstance();
     SOCKET listen_sock = create_socket(logger);
+
 
     client_socket client_1, client_2;
     // Accept a client socket

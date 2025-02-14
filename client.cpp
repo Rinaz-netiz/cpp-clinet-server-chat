@@ -9,10 +9,8 @@
 #include <functional>
 
 #include "des.h"
-#include "logger.h"
-
-
-//todo переделать клиентв
+#include "logger/logger.h"
+#include "utils/utils.h"
 
 
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
@@ -45,7 +43,7 @@ void send_message(Logger& logger, SOCKET sock, Des& des_client, std::vector<int>
         }
 
         if (iResult == SOCKET_ERROR) {
-            logger.log(LogLevel::ERROR_, "Error sending message\n");
+            logger.log(LogLevel::ERROR_, "Error sending message");
             break;
         }
     }
@@ -54,16 +52,17 @@ void send_message(Logger& logger, SOCKET sock, Des& des_client, std::vector<int>
 int __cdecl main()
 {
     Logger& logger = Logger::getInstance();
+    set_color_mode();
     logger.setLogLevel(LogLevel::INFO);
 
     int iResult;
     SOCKET ConnectSocket = create_socket(logger);
   
-      // get password
+    // get password
     std::vector<int> key(KEY_LEN);
     std::string password;
-    std::cout << "Enter your key(8 characters or more): ";
-    getline(std::cin, password);
+
+    get_correct_password(password, "Enter your key(8 characters or more): ");
     key_to_binary(key, password);
 
     // create Des
