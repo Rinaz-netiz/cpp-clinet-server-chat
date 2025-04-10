@@ -5,4 +5,5 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(server src/server.cpp
         src/server.cpp
-        include/server.h)
+        include/server.h
+        main.cpp)
