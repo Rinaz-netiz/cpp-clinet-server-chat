@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-
 import asyncio
-import socket
+
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosedOK
 import json
@@ -11,16 +9,33 @@ TCP_PORT = 8080
 WS_PORT = 8769
 
 async def handler(websocket):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, TCP_PORT))
+    try:
+        reader, writer = await asyncio.open_connection(HOST, TCP_PORT)
+    except Exception as e:
+        print("Some exception" + e)
+        return
 
-    while True:
-        try:
-            await websocket.send("Hi")
-            msg = await websocket.recv()
-            print(msg)
-        except ConnectionClosedOK:
-            break
+    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # s.connect((HOST, TCP_PORT))
+
+    try:
+        while True:
+                msg = await websocket.recv()
+                print(msg)
+                writer.write(msg.encode("utf-8"))
+                await writer.drain()
+                # s.sendall(bytes(msg, "utf-8"))
+
+                response = await reader.read(1024)
+                print(f"[TCP] Ответ: {response.decode()}")
+
+                content = {"name": "Karlson", "msg": "crap chat"}
+                await websocket.send(json.dumps(content))
+    except ConnectionClosedOK:
+        print("Клиент отключился")
+    finally:
+        writer.close()
+        await writer.wait_closed()
 
 
 
