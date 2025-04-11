@@ -5,16 +5,14 @@
 </head>
 <body>
 
-<form action="http://foo.com" method="post">
-    <div>
-        <label for="to">Text</label>
-        <input name="to" id="to" />
-    </div>
-    <div>
-        <button>Send</button>
-    </div>
-</form>
+<form id="userinfo" accept-charset=utf-8>
+    <p>
+        <label for="username">Enter your name:</label>
+        <input type="text" id="username" name="username" />
+    </p>
 
+    <input type="submit" value="Submit" />
+</form>
 
 <script src="main.js" type="module"></script>
 </body>
