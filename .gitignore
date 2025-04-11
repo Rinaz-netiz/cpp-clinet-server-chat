@@ -35,8 +35,4 @@
 cmake-build-debug
 build
 log
-
-test_client
-.venv
-
 .venv
