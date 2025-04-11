@@ -4,23 +4,24 @@ import asyncio
 import socket
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosedOK
+import json
 
 HOST = 'localhost'
-TCP_PORT = 9999
-WS_PORT = 8764
+TCP_PORT = 8080
+WS_PORT = 8769
 
 async def handler(websocket):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, TCP_PORT))
-    print("send request")
 
     while True:
         try:
-            message = await websocket.recv()
-            s.sendall(bytes(message, 'utf-8'))
+            await websocket.send("Hi")
+            msg = await websocket.recv()
+            print(msg)
         except ConnectionClosedOK:
             break
-        print(message)
+
 
 
 async def main():
