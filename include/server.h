@@ -7,15 +7,17 @@
 #include <sys/epoll.h>
 
 class Server {
-    int listen_sock;
-    int efd ;
+    int listen_sock; // сам  сокет
+    int efd ;        // пул epoll
     epoll_event ev{};
+    char buff[1024];
 
     void create_sock();
     void setup_epoll();
     void listen_con();
-    void receive_msg();
-    void send_msg();
+    void accept_client(int fd);
+    void receive_msg(int fd);
+    void send_msg(int size, int id);
     void msg_handler();
 
 public:
