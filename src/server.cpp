@@ -62,7 +62,6 @@ void Server::setup_epoll() {
 
 
 void Server::listen_con() {
-    std::cout << "Server listening on port 8080" << std::endl;
     int fd;
     int count = epoll_wait(efd, &ev, 1, 1000);
     if (count == -1) {
@@ -75,27 +74,60 @@ void Server::listen_con() {
         return;
 
     fd=ev.data.fd;
-    if (fd==listen_sock) {
-        fd = accept(listen_sock, nullptr, nullptr);
-        std::cout << "Server accepted connection " << fd << std::endl;
-        ev.data.fd = fd;
-        if (epoll_ctl(efd, EPOLL_CTL_ADD, fd, &ev)) {
-            perror("epoll_ctl");
+    if (fd==listen_sock)
+        accept_client(fd);
+    else
+        receive_msg(fd);
+
+    // TODO закрыть fd;
+
+
+
+}
+
+void Server::accept_client(int fd) {
+    fd = accept(listen_sock, nullptr, nullptr);
+    std::cout << "Server accepted connection " << fd << std::endl;
+    ev.data.fd = fd;
+    if (epoll_ctl(efd, EPOLL_CTL_ADD, fd, &ev)) {
+        perror("epoll_ctl");
+        close(efd);
+        close(listen_sock);
+        exit(1);
+    }
+}
+
+void Server::receive_msg(int fd) {
+    int bytes = recv(fd, buff, sizeof(buff), 0);
+    if (bytes == -1) {
+        perror("recv");
+        close(efd);
+        close(listen_sock);
+        exit(1);
+    }
+    if (bytes == 0) {
+        if (epoll_ctl(efd, EPOLL_CTL_DEL, fd, NULL)) {
+            perror("epoll_ctr(DEL)");
             close(efd);
             close(listen_sock);
-            exit(1);
+            return;
         }
+        close(fd);
+        printf("Disconnected client (fd: %d)\n", fd);
     }
-    else
-        receive_msg();
-}
 
-void Server::receive_msg() {
+    // TODO обработку перессылки;
+    msg_handler();
 
 }
 
-void Server::send_msg() {
-
+void Server::send_msg(int size, int id) { // еще не сделал
+    int sended = send(efd ,buff, size, 0);
+    if (sended == -1) {
+        perror("send()");
+        close(efd);
+        close(listen_sock);
+    }
 }
 
 void Server::msg_handler() {
@@ -104,6 +136,7 @@ void Server::msg_handler() {
 
 
 void Server::run() {
+    std::cout << "Server listening" << std::endl;
     while (true) {
         listen_con();
     }
