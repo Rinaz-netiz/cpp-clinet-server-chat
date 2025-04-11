@@ -1,37 +1,26 @@
+#!/usr/bin/env python
+
 import asyncio
 import socket
-
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosedOK
-import json
 
 HOST = 'localhost'
-TCP_PORT = 8080
-WS_PORT = 8700
+TCP_PORT = 9999
+WS_PORT = 8764
 
 async def handler(websocket):
-    try:
-        reader, writer = await asyncio.open_connection(HOST, TCP_PORT)
-    except Exception as e:
-        print("Can't create connection to server:" + str(e))
-        return
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, TCP_PORT))
+    print("send request")
 
-    try:
-        while True:
-                msg = await websocket.recv()
-                writer.write(msg.encode("utf-8"))
-                await writer.drain()
-
-                response = await reader.read(1024)
-
-                await websocket.send(json.dumps(json.loads(response.decode())))
-
-    except ConnectionClosedOK:
-        print("Клиент отключился")
-
-        writer.close()
-        await writer.wait_closed()
-
+    while True:
+        try:
+            message = await websocket.recv()
+            s.sendall(bytes(message, 'utf-8'))
+        except ConnectionClosedOK:
+            break
+        print(message)
 
 
 async def main():
