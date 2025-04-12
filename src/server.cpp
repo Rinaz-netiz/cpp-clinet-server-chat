@@ -103,6 +103,7 @@ void Server::msg_handler() {
 
 
 void Server::run() {
+    std::cout << "Server start" << std::endl;
     while (true) {
         listen_con();
     }
