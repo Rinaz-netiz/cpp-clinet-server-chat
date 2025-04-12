@@ -38,7 +38,7 @@ void Server::create_sock() {
     sockaddr_in addr{};
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     addr.sin_port = htons(8080);
 
     if (bind(listen_sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) == EADDRINUSE) {
@@ -105,7 +105,7 @@ void Server::accept_client(int fd) {
 
 void Server::receive_msg(int fd) {
     // мб надо очищать массив
-    int bytes = recv(fd, buff, sizeof(buff), 0);
+    const ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
     if (bytes == -1) {
         perror("recv");
         close(efd);
@@ -123,14 +123,18 @@ void Server::receive_msg(int fd) {
         printf("Disconnected client (fd: %d)\n", fd);
     }
 
+    buff[bytes] = '\0';
+
     // TODO обработку перессылки;
     msg_handler();
-    send_msg(bytes, 0);
+    // send_msg(bytes, 0);
 
+    send(fd, buff, bytes, 0);
+    std::cout << "sended" << std::endl;
 }
 
-void Server::send_msg(int size, int id) { // еще не сделал
-    int clients = epoll_wait(efd, events, 1024, -1);
+void Server::send_msg(ssize_t size, int id) { // еще не сделал
+    const int clients = epoll_wait(efd, events, 1024, -1);
     int fd, sended=0;
     printf("Client sent %d bytes\n", clients);
     if (id == 0) {

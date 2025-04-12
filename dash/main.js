@@ -1,7 +1,7 @@
 window.addEventListener("DOMContentLoaded", () => {
     // Open the WebSocket connection and register event handlers.
 
-    const websocket = new WebSocket("ws://localhost:8769/");
+    const websocket = new WebSocket("ws://localhost:8700/");
 
     websocket.addEventListener("error", (event) => {
         console.log("WebSocket error: ", event);
@@ -13,8 +13,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
     let id = getCookie("user");
-    console.log(id);
-
 
     receiveMessage(websocket);
     sendMessage(websocket, id);
