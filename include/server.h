@@ -9,7 +9,7 @@
 class Server {
     int listen_sock; // сам  сокет
     int efd ;        // пул epoll
-    epoll_event ev{};
+    epoll_event ev{}, events[1024];
     char buff[1024];
 
     void create_sock();

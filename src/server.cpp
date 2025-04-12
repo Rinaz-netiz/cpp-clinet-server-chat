@@ -3,6 +3,7 @@
 //
 
 #include "../include/server.h"
+#include <netinet/in.h>
 #include <cstdio>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -15,6 +16,8 @@
 #include <sys/epoll.h>
 #include <csignal>
 #include <iostream>
+#include <fcntl.h>
+
 
 Server::Server() {
     create_sock();
@@ -50,8 +53,9 @@ void Server::create_sock() {
 void Server::setup_epoll() {
     efd = epoll_create(1024);
 
-    ev.events = EPOLLIN | EPOLLPRI | EPOLLET;
+    ev.events = EPOLLIN; // | EPOLLPRI | EPOLLET;
     ev.data.fd = listen_sock;
+
     if (epoll_ctl(efd, EPOLL_CTL_ADD, listen_sock, &ev) < 0) {
         perror("epoll_ctl");
         close(efd);
@@ -63,32 +67,34 @@ void Server::setup_epoll() {
 
 void Server::listen_con() {
     int fd;
-    int count = epoll_wait(efd, &ev, 1, 1000);
+    int count = epoll_wait(efd, events, 1, 1000);
     if (count == -1) {
         perror("epoll_wait");
         close(efd);
         close(listen_sock);
         exit(1);
     }
-    if (count == 0)
-        return;
 
-    fd=ev.data.fd;
-    if (fd==listen_sock)
-        accept_client(fd);
-    else
-        receive_msg(fd);
+    for (int i = 0; i < count; i++) {
+        fd=events[i].data.fd;
+        if (fd == listen_sock) {
+            accept_client(fd);
+        }
+        else
+            receive_msg(fd);
 
-    // TODO закрыть fd;
-
-
-
+    }
 }
 
 void Server::accept_client(int fd) {
     fd = accept(listen_sock, nullptr, nullptr);
     std::cout << "Server accepted connection " << fd << std::endl;
+
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+
+    ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = fd;
+
     if (epoll_ctl(efd, EPOLL_CTL_ADD, fd, &ev)) {
         perror("epoll_ctl");
         close(efd);
@@ -98,6 +104,7 @@ void Server::accept_client(int fd) {
 }
 
 void Server::receive_msg(int fd) {
+    // мб надо очищать массив
     int bytes = recv(fd, buff, sizeof(buff), 0);
     if (bytes == -1) {
         perror("recv");
@@ -118,11 +125,25 @@ void Server::receive_msg(int fd) {
 
     // TODO обработку перессылки;
     msg_handler();
+    send_msg(bytes, 0);
 
 }
 
 void Server::send_msg(int size, int id) { // еще не сделал
-    int sended = send(efd ,buff, size, 0);
+    int clients = epoll_wait(efd, events, 1024, -1);
+    int fd, sended=0;
+    printf("Client sent %d bytes\n", clients);
+    if (id == 0) {
+        for (int i=0; i < clients; i++) {
+            if (events[i].events & EPOLLIN) {
+                fd = events[i].data.fd;
+                sended = send(fd, buff, size, MSG_NOSIGNAL);
+                printf("Client sent %d bytes\n", sended);
+            }
+        }
+
+    }
+
     if (sended == -1) {
         perror("send()");
         close(efd);
