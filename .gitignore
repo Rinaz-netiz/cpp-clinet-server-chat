@@ -35,3 +35,9 @@
 cmake-build-debug
 build
 log
+
+.venv
+
+Conspect.md
+server
+client
