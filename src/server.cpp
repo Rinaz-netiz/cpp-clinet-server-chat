@@ -3,6 +3,7 @@
 //
 
 #include "../include/server.h"
+#include <netinet/in.h>
 #include <cstdio>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -15,12 +16,12 @@
 #include <sys/epoll.h>
 #include <csignal>
 #include <iostream>
+#include <fcntl.h>
+#define PORT 9999
 
 Server::Server() {
     create_sock();
     setup_epoll();
-
-    listen(listen_sock, 1024);
 }
 
 Server::~Server() {
@@ -31,14 +32,16 @@ Server::~Server() {
 
 void Server::create_sock() {
     listen_sock = socket(AF_INET, SOCK_STREAM, 0);
+    int opt = 1;
+    setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     sockaddr_in addr{};
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port = htons(8080);
+    addr.sin_port = htons(PORT);
 
-    if (bind(listen_sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) == EADDRINUSE) {
+    if (bind(listen_sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr))) {
         perror("bind");
         close(listen_sock);
         exit(1);
@@ -48,10 +51,11 @@ void Server::create_sock() {
 }
 
 void Server::setup_epoll() {
-    efd = epoll_create(1024);
+    efd = epoll_create1(0);
 
-    ev.events = EPOLLIN | EPOLLPRI | EPOLLET;
+    ev.events = EPOLLIN; // | EPOLLET; // | EPOLLPRI    ;
     ev.data.fd = listen_sock;
+
     if (epoll_ctl(efd, EPOLL_CTL_ADD, listen_sock, &ev) < 0) {
         perror("epoll_ctl");
         close(efd);
@@ -62,39 +66,86 @@ void Server::setup_epoll() {
 
 
 void Server::listen_con() {
-    std::cout << "Server listening on port 8080" << std::endl;
     int fd;
-    int count = epoll_wait(efd, &ev, 1, 1000);
+    int count = epoll_wait(efd, events, 1024, 1000);
+
     if (count == -1) {
         perror("epoll_wait");
         close(efd);
         close(listen_sock);
         exit(1);
     }
-    if (count == 0)
-        return;
 
-    fd=ev.data.fd;
-    if (fd==listen_sock) {
-        fd = accept(listen_sock, nullptr, nullptr);
-        std::cout << "Server accepted connection " << fd << std::endl;
-        ev.data.fd = fd;
-        if (epoll_ctl(efd, EPOLL_CTL_ADD, fd, &ev)) {
-            perror("epoll_ctl");
+
+    for (int i = 0; i < count; i++) {
+        fd=events[i].data.fd;
+        if (fd == listen_sock) {
+            accept_client(fd);
+        }
+        else
+            receive_msg(fd);
+    }
+}
+
+void Server::accept_client(int &fd) {
+    fd = accept(listen_sock, nullptr, nullptr);
+    std::cout << "Server accepted connection " << fd << std::endl;
+
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+
+    ev.events = EPOLLIN; // | EPOLLET | EPOLLOUT;
+    ev.data.fd = fd;
+
+    if (epoll_ctl(efd, EPOLL_CTL_ADD, fd, &ev)) {
+        perror("epoll_ctl");
+        close(efd);
+        close(listen_sock);
+        exit(1);
+    }
+    clients.emplace_back(fd);
+}
+
+void Server::receive_msg(int &fd) {
+    // мб надо очищать массивё
+    int bytes = recv(fd, buff, sizeof(buff), 0);
+    printf("Server received message from fd %d\n", fd);
+    if (bytes == -1) {
+        perror("recv");
+        close(efd);
+        close(listen_sock);
+        exit(1);
+    }
+    if (bytes == 0) {
+        if (epoll_ctl(efd, EPOLL_CTL_DEL, fd, nullptr)) {
+            perror("epoll_ctr(DEL)");
             close(efd);
             close(listen_sock);
-            exit(1);
+            return;
+        }
+        close(fd);
+        printf("Disconnected client (fd: %d)\n", fd);
+    }
+
+    // TODO обработку перессылки;
+    msg_handler();
+    send_msg(bytes, 0);
+
+}
+
+void Server::send_msg(int size, int id) { // еще не сделал
+    int sended=0;
+    if (id == 0) {
+        for (int client:clients) {
+            sended = send(client, buff, size, MSG_NOSIGNAL);
+            printf("sended = %d\n", sended);
+            if (sended == -1) {
+                perror("send()");
+                close(efd);
+                close(listen_sock);
+            }
         }
     }
-    else
-        receive_msg();
-}
 
-void Server::receive_msg() {
-
-}
-
-void Server::send_msg() {
 
 }
 
@@ -104,6 +155,10 @@ void Server::msg_handler() {
 
 
 void Server::run() {
+    std::cout << "Server listening" << std::endl;
+    listen(listen_sock, 1024);
+    fcntl(listen_sock, F_SETFL, O_NONBLOCK);
+
     while (true) {
         listen_con();
     }
