@@ -19,7 +19,7 @@
 #include <fcntl.h>
 #define PORT 9999
 
-Server::Server() {
+Server::Server() : db() {
     create_sock();
     setup_epoll();
 }
@@ -106,30 +106,37 @@ void Server::accept_client(int &fd) {
 }
 
 void Server::receive_msg(int &fd) {
-    // мб надо очищать массивё
     int bytes = recv(fd, buff, sizeof(buff), 0);
-    printf("Server received message from fd %d\n", fd);
     if (bytes == -1) {
         perror("recv");
-        close(efd);
-        close(listen_sock);
-        exit(1);
+        return;
     }
     if (bytes == 0) {
+        db.disconnectUser(fd);
         if (epoll_ctl(efd, EPOLL_CTL_DEL, fd, nullptr)) {
             perror("epoll_ctr(DEL)");
-            close(efd);
-            close(listen_sock);
-            return;
         }
         close(fd);
         printf("Disconnected client (fd: %d)\n", fd);
+        return;
     }
 
-    // TODO обработку перессылки;
-    msg_handler();
-    send_msg(bytes, 0);
+    std::string received(buff, bytes);
+    
+    // Обработка команд (регистрация/аутентификация)
+    if (received.find("/register") == 0 || received.find("/login") == 0) {
+        handle_command(fd, received);
+        return;
+    }
 
+    // Сохранение обычного сообщения
+    if (!db.saveMessage(fd, received)) {
+        std::string error = "Error saving message";
+        send(fd, error.c_str(), error.size(), 0);
+        return;
+    }
+
+    send_msg(bytes, 0);
 }
 
 void Server::send_msg(int size, int id) { // еще не сделал
@@ -164,4 +171,52 @@ void Server::run() {
     }
 }
 
+void Server::handle_command(int fd, const std::string& command) {
+    size_t space_pos = command.find(' ');
+    if (space_pos == std::string::npos) {
+        std::string response = "Invalid command format";
+        send(fd, response.c_str(), response.size(), 0);
+        return;
+    }
 
+    std::string cmd = command.substr(0, space_pos);
+    std::string args = command.substr(space_pos + 1);
+    
+    size_t colon_pos = args.find(':');
+    if (colon_pos == std::string::npos) {
+        std::string response = "Invalid arguments format (login:password required)";
+        send(fd, response.c_str(), response.size(), 0);
+        return;
+    }
+
+    std::string login = args.substr(0, colon_pos);
+    std::string password = args.substr(colon_pos + 1);
+
+    if (cmd == "/register") {
+        if (db.addUser(login, password)) {
+            std::string response = "Registration successful";
+            send(fd, response.c_str(), response.size(), 0);
+        } else {
+            std::string response = "Registration failed";
+            send(fd, response.c_str(), response.size(), 0);
+        }
+    }
+    else if (cmd == "/login") {
+        if (db.authenticateUser(fd, login, password)) {
+            std::string response = "Login successful";
+            send(fd, response.c_str(), response.size(), 0);
+        } else {
+            std::string response = "Login failed";
+            send(fd, response.c_str(), response.size(), 0);
+        }
+    }
+}
+
+Server::~Server() {
+    for (int fd : clients) {
+        db.disconnectUser(fd);
+        close(fd);
+    }
+    close(efd);
+    close(listen_sock);
+}
