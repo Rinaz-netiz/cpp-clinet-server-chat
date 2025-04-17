@@ -38,7 +38,7 @@ void Server::create_sock() {
     sockaddr_in addr{};
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     addr.sin_port = htons(PORT);
 
     if (bind(listen_sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr))) {
