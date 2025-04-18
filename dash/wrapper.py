@@ -6,7 +6,7 @@ import json
 
 HOST = 'localhost'
 TCP_PORT = 8080
-WS_PORT = 8731
+WS_PORT = 8733
 
 
 CLIENTS = set()

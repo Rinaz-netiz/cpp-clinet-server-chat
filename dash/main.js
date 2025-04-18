@@ -1,7 +1,7 @@
 window.addEventListener("DOMContentLoaded", () => {
     // Open the WebSocket connection and register event handlers.
 
-    const websocket = new WebSocket("ws://localhost:8731/");
+    const websocket = new WebSocket("ws://localhost:8733/");
 
     websocket.addEventListener("error", (event) => {
         console.log("WebSocket error: ", event);
@@ -50,9 +50,18 @@ function addNewMessage(classesType, data) {
     let div = document.createElement("div");
     div.setAttribute('class', classesType);
 
+
+    let url_svg = "";
+    if(data["name"] === getCookie("user")) {
+        url_svg = "\"https://bootdey.com/img/Content/avatar/avatar1.png\"";
+    } else
+    {
+        url_svg = "\"https://bootdey.com/img/Content/avatar/avatar3.png\"";
+    }
+
     div.innerHTML = `
             <div>
-            <img src="https://bootdey.com/img/Content/avatar/avatar1.png" class="rounded-circle mr-1" alt="Chris Wood" width="40" height="40">
+            <img src=${url_svg} class="rounded-circle mr-1" alt="Chris Wood" width="40" height="40">
             <div class="text-muted small text-nowrap mt-2">2:43 am</div>
             </div>
             <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
