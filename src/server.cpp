@@ -17,7 +17,8 @@
 #include <csignal>
 #include <iostream>
 #include <fcntl.h>
-#define PORT 9999
+#include <vector>
+#define PORT 8080
 
 Server::Server() {
     create_sock();
@@ -123,27 +124,42 @@ void Server::receive_msg(int &fd) {
             return;
         }
         close(fd);
+        for (int i = 0; i < clients.size(); ++i)
+            if (fd == clients[i])
+                clients.erase(clients.begin() + i);
+
         printf("Disconnected client (fd: %d)\n", fd);
     }
 
+    buff[bytes] = '\0';
     // TODO обработку перессылки;
     msg_handler();
-    send_msg(bytes, 0);
+    send_msg(bytes, 0, fd);
 
 }
 
-void Server::send_msg(int size, int id) { // еще не сделал
-    int sended=0;
+void Server::send_msg(int size, int id, int fd) { // еще не сделал
+    ssize_t sended=0;
     if (id == 0) {
-        for (int client:clients) {
-            sended = send(client, buff, size, MSG_NOSIGNAL);
-            printf("sended = %d\n", sended);
-            if (sended == -1) {
-                perror("send()");
-                close(efd);
-                close(listen_sock);
-            }
+
+        sended = send(fd, buff, size, MSG_NOSIGNAL);
+        std::cout << "sended to client: " << fd << std::endl;
+        if (sended == -1) {
+            perror("send()");
+            close(efd);
+            close(listen_sock);
         }
+
+        // for (int client:clients) {
+        //     sended = send(client, buff, size, MSG_NOSIGNAL);
+        //     std::cout << "sended to client: " << client << std::endl;
+        //     if (sended == -1) {
+        //         perror("send()");
+        //         close(efd);
+        //         close(listen_sock);
+        //     }
+        // }
+        memset(buff, 0, sizeof(buff));
     }
 
 

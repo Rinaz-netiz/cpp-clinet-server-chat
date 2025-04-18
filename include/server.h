@@ -19,7 +19,7 @@ class Server {
     void listen_con();
     void accept_client(int &fd);
     void receive_msg(int &fd);
-    void send_msg(int size, int id);
+    void send_msg(int size, int id, int fd);
     void msg_handler();
 
 public:
