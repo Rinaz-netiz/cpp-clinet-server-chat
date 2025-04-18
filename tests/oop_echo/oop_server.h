@@ -29,27 +29,3 @@ public:
 };
 
 #endif // SERVER_H
-
-
-/*
-#pragma once
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
-class Server
-{
-private:
-	SOCKET this_s;
-	WSAData wData;
-
-public:
-	unsigned short port;
-
-	Server();
-	~Server();
-	void startServer();
-	void closeServer();
-	void handle();
-};
-*/
